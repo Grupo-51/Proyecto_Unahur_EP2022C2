@@ -53,7 +53,6 @@ const findAlumnosinscripciones = (id, { onSuccess, onNotFound, onError }) => {
   models.alumnosinscripciones
     .findOne({
       attributes: ["id", "nota_final"] ,
-      raw: true,
       include: [
         {
           model: models.alumno,
@@ -122,5 +121,6 @@ router.delete("/:id", (req, res) => {
     onError: () => res.sendStatus(500)
   });
 });
+
 
 module.exports = router;
