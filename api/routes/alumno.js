@@ -5,14 +5,18 @@ var models = require("../models");
 
 router.get("/", (req, res) => {
   console.log("Esto es un mensaje para ver en consola");
+  const {paginaActual, cantidadAVer} = req.query;
   models.alumno
     .findAll({
+      offset: (paginaActual - 1) * cantidadAVer,
+      limit: parseInt(cantidadAVer),
       attributes: ["id", "nombre", "apellido", "email"]
     })
     .then(alumno => res.send(alumno))
     .catch(() => res.sendStatus(500));
 });
 
+/*
 router.get('/pagina/:page', (req, res) => {
   let limit = 5;   // number of records per page
   let offset = 0;
@@ -36,6 +40,8 @@ router.get('/pagina/:page', (req, res) => {
 		res.status(500).send('Internal Server Error');
 	});
 });
+
+*/
 
 router.post("/", (req, res) => {
   models.alumno

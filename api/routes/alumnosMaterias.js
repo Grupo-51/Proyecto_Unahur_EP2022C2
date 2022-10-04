@@ -5,8 +5,11 @@ var models = require("../models");
 
 router.get("/", (req, res) => {
   console.log("Esto es un mensaje para ver en consola");
+  const {paginaActual, cantidadAVer} = req.query;
   models.alumnosinscripciones
   .findAll({
+    offset: (paginaActual - 1) * cantidadAVer,
+    limit: parseInt(cantidadAVer),
     attributes: ["id", "nota_final"] ,
     raw: true,
     include: [
@@ -34,7 +37,7 @@ router.get("/", (req, res) => {
 }
 );
 
-
+/*
 router.get('/pagina/:page', (req, res) => {
   let limit = 5;   // number of records per page
   let offset = 0;
@@ -79,7 +82,7 @@ router.get('/pagina/:page', (req, res) => {
 	});
 });
 
-
+*/
 
 router.post("/", (req, res) => {
   models.alumnosinscripciones
