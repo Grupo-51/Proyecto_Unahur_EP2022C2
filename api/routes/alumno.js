@@ -13,7 +13,29 @@ router.get("/", (req, res) => {
     .catch(() => res.sendStatus(500));
 });
 
-
+router.get('/pagina/:page', (req, res) => {
+  let limit = 5;   // number of records per page
+  let offset = 0;
+  models.alumno
+  .findAndCountAll()
+  .then((data) => {
+    let page = req.params.page;      // page number
+    let pages = Math.ceil(data.count / limit);
+		offset = limit * (page - 1);
+    models.alumno.findAll({
+      attributes: ["id", "nombre", "apellido", "email"],
+      limit: limit,
+      offset: offset,
+      $sort: { id: 1 }
+    })
+    .then((alumno) => {
+      res.status(200).json({'result': alumno, 'count': data.count, 'pages': pages});
+    });
+  })
+  .catch(function (error) {
+		res.status(500).send('Internal Server Error');
+	});
+});
 
 router.post("/", (req, res) => {
   models.alumno

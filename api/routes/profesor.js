@@ -13,6 +13,33 @@ router.get("/", (req, res) => {
     .catch(() => res.sendStatus(500));
 });
 
+
+router.get('/pagina/:page', (req, res) => {
+  let limit = 5;   // number of records per page
+  let offset = 0;
+  models.profesor
+  .findAndCountAll()
+  .then((data) => {
+    let page = req.params.page;      // page number
+    let pages = Math.ceil(data.count / limit);
+		offset = limit * (page - 1);
+    models.profesor.findAll({
+      attributes: ["id", "nombre", "apellido","id_materia"],
+      include:[{as:'Materia-QueDicta', model:models.materia, attributes: ["nombre"]}],
+      limit: limit,
+      offset: offset,
+      $sort: { id: 1 }
+    })
+    .then((profesor) => {
+      res.status(200).json({'result': profesor, 'count': data.count, 'pages': pages});
+    });
+  })
+  .catch(function (error) {
+		res.status(500).send('Internal Server Error');
+	});
+});
+
+
 router.post("/", (req, res) => {
   models.profesor
     .create({ nombre: req.body.nombre, apellido: req.body.apellido, id_materia: req.body.id_materia })

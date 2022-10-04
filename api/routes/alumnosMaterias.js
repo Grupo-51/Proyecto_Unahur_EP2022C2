@@ -34,9 +34,56 @@ router.get("/", (req, res) => {
 }
 );
 
+
+router.get('/pagina/:page', (req, res) => {
+  let limit = 5;   // number of records per page
+  let offset = 0;
+  models.alumnosinscripciones
+  .findAndCountAll()
+  .then((data) => {
+    let page = req.params.page;      // page number
+    let pages = Math.ceil(data.count / limit);
+		offset = limit * (page - 1);
+    models.alumnosinscripciones.findAll({
+      attributes: ["id", "nota_final"] ,
+      raw: true,
+      include: [
+        {
+          model: models.alumno,
+          as: "Alumno-Matriculado",
+          attributes: ["id", "nombre", "apellido", "email"]
+        },
+        {
+          model: models.materia,
+          as: "Materia-Matriculada",
+          attributes: ["id", "nombre"],
+          include: [
+            {
+              model: models.carrera,
+              as: "Carrera-Relacionada",
+              attributes: ["id", "nombre"]
+            }
+          ]
+        }
+      ],
+      limit: limit,
+      offset: offset,
+      $sort: { id: 1 }
+    })
+    .then((alumnosinscripciones) => {
+      res.status(200).json({'result': alumnosinscripciones, 'count': data.count, 'pages': pages});
+    });
+  })
+  .catch(function (error) {
+		res.status(500).send('Internal Server Error');
+	});
+});
+
+
+
 router.post("/", (req, res) => {
   models.alumnosinscripciones
-    .create({ id_alumno: req.body.id_alumno, id_materia: req.body.id_materia })
+    .create({ id_alumno: req.body.id_alumno, id_materia: req.body.id_materia , nota_final: req.body.nota_final })
     .then(alumnosinscripciones => res.status(201).send({ id: alumnosinscripciones.id }))
     .catch(error => {
       if (error == "SequelizeUniqueConstraintError: Validation error") {
@@ -90,7 +137,7 @@ router.put("/:id", (req, res) => {
   const onSuccess = alumnosinscripciones =>
     alumnosinscripciones
       .update(
-        { id_alumno: req.body.id_alumno, id_materia: req.body.id_materia } , { fields: ["id_alumno", "id_materia"] }
+        { id_alumno: req.body.id_alumno, id_materia: req.body.id_materia, nota_final: req.body.nota_final } , { fields: ["id_alumno", "id_materia", "nota_final"] }
       )
       .then(() => res.sendStatus(200))
       .catch(error => {

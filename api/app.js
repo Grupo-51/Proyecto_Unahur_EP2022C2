@@ -23,10 +23,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 app.use('/car', carrerasRouter);
+app.use('/car/pagina', carrerasRouter);
 app.use('/mat', materiasRouter);
+app.use('/mat/pagina', materiasRouter);
 app.use('/prof', profesoresRouter);
+app.use('/prof/pagina', profesoresRouter);
 app.use('/alu', alumnosRouter);
+app.use('/alu/pagina', alumnosRouter);
 app.use('/alumat', alumnosMateriasRouter);
+app.use('/alumat/pagina', alumnosMateriasRouter);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

@@ -6,40 +6,14 @@ router.get("/", (req, res) => {
   console.log("Esto es un mensaje para ver en consola");
   models.materia
     .findAll({
+      offset: 5,
+      limit: 5,
       attributes: ["id", "nombre", "id_carrera"],
       include:[{as:'Carrera-Relacionada', model:models.carrera, attributes: ["nombre"]}]
     })
     .then(materia => res.send(materia))
     .catch(() => res.sendStatus(500));
 });
-
-
-
-router.get('/pagina/:page', (req, res) => {
-  let limit = 5;   // number of records per page
-  let offset = 0;
-  models.materia
-  .findAndCountAll()
-  .then((data) => {
-    let page = req.params.page;      // page number
-    let pages = Math.ceil(data.count / limit);
-		offset = limit * (page - 1);
-    models.materia.findAll({
-      attributes: ["id", "nombre", "id_carrera"],
-      limit: limit,
-      offset: offset,
-      $sort: { id: 1 }
-    })
-    .then((materia) => {
-      res.status(200).json({'result': materia, 'count': data.count, 'pages': pages});
-    });
-  })
-  .catch(function (error) {
-		res.status(500).send('Internal Server Error');
-	});
-});
-
-
 
 router.post("/", (req, res) => {
   models.materia
