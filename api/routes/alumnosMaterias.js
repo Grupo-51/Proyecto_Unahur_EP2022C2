@@ -4,6 +4,55 @@ var models = require("../models");
 
 
 router.get("/", (req, res) => {
+  const paginaActualNumero = Number.parseInt(req.query.paginaActual);
+  const cantidadAVerNumero = Number.parseInt(req.query.cantidadAVer);
+
+  let paginaActual = 1;
+  if(!Number.isNaN(paginaActualNumero) && paginaActualNumero > 0){
+    paginaActual = paginaActualNumero;
+  }
+
+  let cantidadAVer = 5;
+  if(!Number.isNaN(cantidadAVerNumero) && cantidadAVerNumero > 0 && cantidadAVerNumero <= 10){    
+    cantidadAVer = cantidadAVerNumero;
+  }
+  console.log("Esto es un mensaje para ver en consola");
+  models.alumno
+  .findAll({
+    offset: (paginaActual - 1) * cantidadAVer,
+    limit: parseInt(cantidadAVer),
+    attributes: ["id", "nombre", "apellido", "email"], 
+    //raw: true,
+    include: [
+      {
+        model: models.alumnosinscripciones,
+        as: "Inscripciones",
+        attributes: ["id", "nota_final"],
+        include: [
+          {
+            model: models.materia,
+            as: "Materia-Matriculada",
+            attributes: ["id", "nombre"],
+            include: [
+              {
+                model: models.profesor,
+                as: "Profesor-QueDicta",
+                attributes: ["id", "nombre", "apellido"]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  })
+  .then(alumno => res.send(alumno))
+  .catch(() => res.sendStatus(500));
+}
+);
+
+/*
+
+router.get("/", (req, res) => {
   console.log("Esto es un mensaje para ver en consola");
   const {paginaActual, cantidadAVer} = req.query;
   models.alumnosinscripciones
@@ -36,6 +85,7 @@ router.get("/", (req, res) => {
   .catch(() => res.sendStatus(500));
 }
 );
+
 
 /*
 router.get('/pagina/:page', (req, res) => {

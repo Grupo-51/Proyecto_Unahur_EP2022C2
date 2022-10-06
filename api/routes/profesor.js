@@ -3,8 +3,20 @@ var router = express.Router();
 var models = require("../models");
 
 router.get("/", (req, res) => {
+  const paginaActualNumero = Number.parseInt(req.query.paginaActual);
+  const cantidadAVerNumero = Number.parseInt(req.query.cantidadAVer);
+
+  let paginaActual = 1;
+  if(!Number.isNaN(paginaActualNumero) && paginaActualNumero > 0){
+    paginaActual = paginaActualNumero;
+  }
+
+  let cantidadAVer = 5;
+  if(!Number.isNaN(cantidadAVerNumero) && cantidadAVerNumero > 0 && cantidadAVerNumero <= 10){    
+    cantidadAVer = cantidadAVerNumero;
+  }
+
   console.log("Esto es un mensaje para ver en consola");
-  const { paginaActual, cantidadAVer } = req.query;
   models.profesor
     .findAll({
       offset: (paginaActual - 1) * cantidadAVer,
@@ -16,32 +28,6 @@ router.get("/", (req, res) => {
     .catch(() => res.sendStatus(500));
 });
 
-/*
-router.get('/pagina/:page', (req, res) => {
-  let limit = 5;   // number of records per page
-  let offset = 0;
-  models.profesor
-  .findAndCountAll()
-  .then((data) => {
-    let page = req.params.page;      // page number
-    let pages = Math.ceil(data.count / limit);
-		offset = limit * (page - 1);
-    models.profesor.findAll({
-      attributes: ["id", "nombre", "apellido","id_materia"],
-      include:[{as:'Materia-QueDicta', model:models.materia, attributes: ["nombre"]}],
-      limit: limit,
-      offset: offset,
-      $sort: { id: 1 }
-    })
-    .then((profesor) => {
-      res.status(200).json({'result': profesor, 'count': data.count, 'pages': pages});
-    });
-  })
-  .catch(function (error) {
-		res.status(500).send('Internal Server Error');
-	});
-});
-*/
 
 router.post("/", (req, res) => {
   models.profesor

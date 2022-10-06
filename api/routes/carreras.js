@@ -3,8 +3,20 @@ var router = express.Router();
 var models = require("../models");
 
 router.get("/", (req, res) => {
+  const paginaActualNumero = Number.parseInt(req.query.paginaActual);
+  const cantidadAVerNumero = Number.parseInt(req.query.cantidadAVer);
+
+  let paginaActual = 1;
+  if(!Number.isNaN(paginaActualNumero) && paginaActualNumero > 0){
+    paginaActual = paginaActualNumero;
+  }
+
+  let cantidadAVer = 5;
+  if(!Number.isNaN(cantidadAVerNumero) && cantidadAVerNumero > 0 && cantidadAVerNumero <= 10){    
+    cantidadAVer = cantidadAVerNumero;
+  }
+
   console.log("Esto es un mensaje para ver en consola");
-  const { paginaActual, cantidadAVer } = req.query;
   models.carrera
     .findAll({
       offset: (paginaActual - 1) * cantidadAVer,
