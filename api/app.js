@@ -9,7 +9,35 @@ var alumnosRouter = require('./routes/alumno');
 var alumnosMateriasRouter = require('./routes/alumnosMaterias');
 var profesoresRouter = require('./routes/profesor');
 
+var bodyParser = require('body-parser');
+var jwt = require('jsonwebtoken');
+var keys = require('./config/keys');
+
 var app = express();
+
+// json web token
+app.set("key", keys.key);
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+app.post("/login", (req, res) => {
+  if (req.body.usuario === "admin" && req.body.pass === "12345") {
+    const payload = {
+      check: true
+    };
+    const token = jwt.sign(payload, app.get('key'), {
+      expiresIn: '1d'
+    });
+    res.json({
+      mensaje: 'Autenticación correcta',
+      token: token
+    });
+  }else {
+      res.json({ mensaje: "Usuario y/o contraseña incorrectos" })
+    }
+  });
+
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -23,15 +51,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 app.use('/car', carrerasRouter);
-//app.use('/car/pagina', carrerasRouter);
 app.use('/mat', materiasRouter);
-//app.use('/mat/pagina', materiasRouter);
 app.use('/prof', profesoresRouter);
-//app.use('/prof/pagina', profesoresRouter);
 app.use('/alu', alumnosRouter);
-//app.use('/alu/pagina', alumnosRouter);
 app.use('/alumat', alumnosMateriasRouter);
-//app.use('/alumat/pagina', alumnosMateriasRouter);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

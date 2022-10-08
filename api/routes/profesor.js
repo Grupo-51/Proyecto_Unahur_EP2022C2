@@ -21,7 +21,7 @@ router.get("/", (req, res) => {
     .findAll({
       offset: (paginaActual - 1) * cantidadAVer,
       limit: parseInt(cantidadAVer),
-      attributes: ["id", "nombre", "apellido","id_materia"],
+      attributes: ["id", "nombre", "apellido","id_materia","email"],
       include:[{as:'Materia-QueDicta', model:models.materia, attributes: ["nombre"]}]
     })
     .then(profesor => res.send(profesor))
@@ -31,7 +31,7 @@ router.get("/", (req, res) => {
 
 router.post("/", (req, res) => {
   models.profesor
-    .create({ nombre: req.body.nombre, apellido: req.body.apellido, id_materia: req.body.id_materia })
+    .create({ nombre: req.body.nombre, apellido: req.body.apellido, id_materia: req.body.id_materia, email: req.body.email })
     .then(profesor => res.status(201).send({ id: profesor.id }))
     .catch(error => {
       if (error == "SequelizeUniqueConstraintError: Validation error") {
@@ -47,7 +47,7 @@ router.post("/", (req, res) => {
 const findProfesor = (id, { onSuccess, onNotFound, onError }) => {
   models.profesor
     .findOne({
-      attributes: ["id", "nombre", "apellido","id_materia"],
+      attributes: ["id", "nombre", "apellido","id_materia","email"],
       include:[{as:'Materia-QueDicta', model:models.materia, attributes: ["nombre"]}],
       where: { id }
     })
@@ -67,7 +67,7 @@ router.put("/:id", (req, res) => {
   const onSuccess = profesor =>
     profesor
       .update(
-        { nombre: req.body.nombre, apellido: req.body.apellido, id_materia: req.body.id_materia } , { fields: ["nombre", "apellido", "id_materia"] }
+        { nombre: req.body.nombre, apellido: req.body.apellido, id_materia: req.body.id_materia, email: req.body.email } , { fields: ["nombre", "apellido", "id_materia", "email"] }
       )
       .then(() => res.sendStatus(200))
       .catch(error => {

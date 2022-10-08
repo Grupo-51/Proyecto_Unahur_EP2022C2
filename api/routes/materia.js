@@ -2,7 +2,44 @@ var express = require("express");
 var router = express.Router();
 var models = require("../models");
 
-router.get("/", (req, res) => {
+/*
+// rutas protegidas
+const rutasProtegidas = express.Router(); 
+rutasProtegidas.use((req, res, next) => {
+    const token = req.headers['access-token'];
+ 
+    if (token) {
+      jwt.verify(token, app.get('key'), (err, decoded) => {      
+        if (err) {
+          return res.json({ mensaje: 'Token inválida' });    
+        } else {
+          req.decoded = decoded;    
+          next();
+        }
+      });
+    } else {
+        res.send({ 
+          mensaje: 'Token no proveída.' 
+        });
+    }
+});
+*/
+const verification = (req, res, next) => {
+let token = req.headers['access-token'];
+if (!token) {
+return res.status(403).send({ auth: false, message: 'No token provided.' });
+}
+jwt.verify(token, app.get('key'), function(err, decoded) {
+if (err) return res.status(500).send({ auth: false, message: 'Failed to authenticate token.' });
+// if everything good, save to request for use in other routes
+req.userId = decoded.id;
+next();
+});
+};
+
+
+router.get("/", verification, (req, res) => {
+  
   const paginaActualNumero = Number.parseInt(req.query.paginaActual);
   const cantidadAVerNumero = Number.parseInt(req.query.cantidadAVer);
 
