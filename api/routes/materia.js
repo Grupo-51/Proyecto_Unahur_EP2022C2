@@ -4,6 +4,7 @@ var models = require("../models");
 
 /*
 // rutas protegidas
+// Nos queda por resolver como ejecutar un get con el token incluido
 const rutasProtegidas = express.Router(); 
 rutasProtegidas.use((req, res, next) => {
     const token = req.headers['access-token'];
@@ -24,21 +25,8 @@ rutasProtegidas.use((req, res, next) => {
     }
 });
 */
-const verification = (req, res, next) => {
-let token = req.headers['access-token'];
-if (!token) {
-return res.status(403).send({ auth: false, message: 'No token provided.' });
-}
-jwt.verify(token, app.get('key'), function(err, decoded) {
-if (err) return res.status(500).send({ auth: false, message: 'Failed to authenticate token.' });
-// if everything good, save to request for use in other routes
-req.userId = decoded.id;
-next();
-});
-};
-
-
-router.get("/", verification, (req, res) => {
+//router.get("/", rutasProtegidas, (req, res) => {
+router.get("/", (req, res) => {
   
   const paginaActualNumero = Number.parseInt(req.query.paginaActual);
   const cantidadAVerNumero = Number.parseInt(req.query.cantidadAVer);
