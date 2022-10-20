@@ -1,8 +1,9 @@
 var express = require("express");
 var router = express.Router();
 var models = require("../models");
+const verifyToken = require("../middleware/auth");
 
-router.get("/", (req, res) => {
+router.get("/", verifyToken, (req, res) => {
   const paginaActualNumero = Number.parseInt(req.query.paginaActual);
   const cantidadAVerNumero = Number.parseInt(req.query.cantidadAVer);
 
@@ -27,34 +28,8 @@ router.get("/", (req, res) => {
     .catch(() => res.sendStatus(500));
 });
 
-/*
-router.get('/pagina/:page', (req, res) => {
-  let limit = 5;   // number of records per page
-  let offset = 0;
-  models.carrera
-  .findAndCountAll()
-  .then((data) => {
-    let page = req.params.page;      // page number
-    let pages = Math.ceil(data.count / limit);
-		offset = limit * (page - 1);
-    models.carrera.findAll({
-      attributes: ["id", "nombre"],
-      limit: limit,
-      offset: offset,
-      $sort: { id: 1 }
-    })
-    .then((carrera) => {
-      res.status(200).json({'result': carrera, 'count': data.count, 'pages': pages});
-    });
-  })
-  .catch(function (error) {
-		res.status(500).send('Internal Server Error');
-	});
-});
 
-*/
-
-router.post("/", (req, res) => {
+router.post("/", verifyToken, (req, res) => {
   models.carrera
     .create({ nombre: req.body.nombre })
     .then(carrera => res.status(201).send({ id: carrera.id }))
@@ -79,7 +54,7 @@ const findCarrera = (id, { onSuccess, onNotFound, onError }) => {
     .catch(() => onError());
 };
 
-router.get("/:id", (req, res) => {
+router.get("/:id", verifyToken, (req, res) => {
   findCarrera(req.params.id, {
     onSuccess: carrera => res.send(carrera),
     onNotFound: () => res.sendStatus(404),
@@ -87,7 +62,7 @@ router.get("/:id", (req, res) => {
   });
 });
 
-router.put("/:id", (req, res) => {
+router.put("/:id", verifyToken, (req, res) => {
   const onSuccess = carrera =>
     carrera
       .update({ nombre: req.body.nombre }, { fields: ["nombre"] })
@@ -108,7 +83,7 @@ router.put("/:id", (req, res) => {
   });
 });
 
-router.delete("/:id", (req, res) => {
+router.delete("/:id", verifyToken, (req, res) => {
   const onSuccess = carrera =>
     carrera
       .destroy()

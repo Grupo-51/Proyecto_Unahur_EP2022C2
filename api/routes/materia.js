@@ -1,34 +1,11 @@
 var express = require("express");
 var router = express.Router();
 var models = require("../models");
-var keys = require("../config/keys");
-var jwt = require("jsonwebtoken");
 
-const verification = express.Router();
-
-verification.use((req, res, next) => {
-    const token = req.headers['access-token'];
- 
-    if (token) {
-      jwt.verify(token, keys.key, (err, decoded) => {      
-        if (err) {
-          return res.json({ mensaje: 'Token inválida' });    
-        } else {
-          req.decoded = decoded;    
-          next();
-        }
-      });
-    } else {
-        res.send({ 
-          mensaje: 'Token no proveída.' 
-        });
-    }
-});
+const verifyToken = require("../middleware/auth");
 
 
-
-
-router.get("/", verification, (req, res) => {
+router.get("/", verifyToken, (req, res) => {
   
   const paginaActualNumero = Number.parseInt(req.query.paginaActual);
   const cantidadAVerNumero = Number.parseInt(req.query.cantidadAVer);
@@ -58,7 +35,7 @@ router.get("/", verification, (req, res) => {
 });
 
 
-router.post("/", (req, res) => {
+router.post("/", verifyToken, (req, res) => {
   models.materia
     .create({ nombre: req.body.nombre, id_carrera: req.body.id_carrera, id_profesor: req.body.id_profesor })
     .then(materia => res.status(201).send({ id: materia.id }))
@@ -85,7 +62,7 @@ const findMateria = (id, { onSuccess, onNotFound, onError }) => {
     .catch(() => onError());
 };
 
-router.get("/:id", (req, res) => {
+router.get("/:id", verifyToken, (req, res) => {
   findMateria(req.params.id, {
     onSuccess: materia => res.send(materia),
     onNotFound: () => res.sendStatus(404),
@@ -93,7 +70,7 @@ router.get("/:id", (req, res) => {
   });
 });
 
-router.put("/:id", (req, res) => {
+router.put("/:id", verifyToken, (req, res) => {
   const onSuccess = materia =>
     materia
       .update(
@@ -116,7 +93,7 @@ router.put("/:id", (req, res) => {
   });
 });
 
-router.delete("/:id", (req, res) => {
+router.delete("/:id", verifyToken, (req, res) => {
   const onSuccess = materia =>
     materia
       .destroy()

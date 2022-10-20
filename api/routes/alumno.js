@@ -1,9 +1,9 @@
 var express = require("express");
 var router = express.Router();
 var models = require("../models");
+const verifyToken = require("../middleware/auth");
 
-
-router.get("/", (req, res) => {
+router.get("/", verifyToken, (req, res) => {
   const paginaActualNumero = Number.parseInt(req.query.paginaActual);
   const cantidadAVerNumero = Number.parseInt(req.query.cantidadAVer);
 
@@ -27,34 +27,8 @@ router.get("/", (req, res) => {
     .catch(() => res.sendStatus(500));
 });
 
-/*
-router.get('/pagina/:page', (req, res) => {
-  let limit = 5;   // number of records per page
-  let offset = 0;
-  models.alumno
-  .findAndCountAll()
-  .then((data) => {
-    let page = req.params.page;      // page number
-    let pages = Math.ceil(data.count / limit);
-		offset = limit * (page - 1);
-    models.alumno.findAll({
-      attributes: ["id", "nombre", "apellido", "email"],
-      limit: limit,
-      offset: offset,
-      $sort: { id: 1 }
-    })
-    .then((alumno) => {
-      res.status(200).json({'result': alumno, 'count': data.count, 'pages': pages});
-    });
-  })
-  .catch(function (error) {
-		res.status(500).send('Internal Server Error');
-	});
-});
 
-*/
-
-router.post("/", (req, res) => {
+router.post("/", verifyToken, (req, res) => {
   models.alumno
     .create({ nombre: req.body.nombre, apellido: req.body.apellido, email: req.body.email })
     .then(alumno => res.status(201).send({ id: alumno.id }))
@@ -79,7 +53,7 @@ const findAlumno = (id, { onSuccess, onNotFound, onError }) => {
     .catch(() => onError());
 };
 
-router.get("/:id", (req, res) => {
+router.get("/:id", verifyToken, (req, res) => {
   findAlumno(req.params.id, {
     onSuccess: alumno => res.send(alumno),
     onNotFound: () => res.sendStatus(404),
@@ -87,7 +61,7 @@ router.get("/:id", (req, res) => {
   });
 });
 
-router.put("/:id", (req, res) => {
+router.put("/:id", verifyToken, (req, res) => {
   const onSuccess = alumno =>
     alumno
       .update(
@@ -113,7 +87,7 @@ router.put("/:id", (req, res) => {
   });
 });
 
-router.delete("/:id", (req, res) => {
+router.delete("/:id", verifyToken, (req, res) => {
   const onSuccess = alumno =>
     alumno
       .destroy()

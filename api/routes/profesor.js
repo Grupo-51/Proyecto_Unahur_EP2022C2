@@ -1,8 +1,9 @@
 var express = require("express");
 var router = express.Router();
 var models = require("../models");
+const verifyToken = require("../middleware/auth");
 
-router.get("/", (req, res) => {
+router.get("/", verifyToken, (req, res) => {
   const paginaActualNumero = Number.parseInt(req.query.paginaActual);
   const cantidadAVerNumero = Number.parseInt(req.query.cantidadAVer);
 
@@ -29,7 +30,7 @@ router.get("/", (req, res) => {
 });
 
 
-router.post("/", (req, res) => {
+router.post("/", verifyToken, (req, res) => {
   models.profesor
     .create({ nombre: req.body.nombre, apellido: req.body.apellido, id_materia: req.body.id_materia, email: req.body.email })
     .then(profesor => res.status(201).send({ id: profesor.id }))
@@ -55,7 +56,7 @@ const findProfesor = (id, { onSuccess, onNotFound, onError }) => {
     .catch(() => onError());
 };
 
-router.get("/:id", (req, res) => {
+router.get("/:id", verifyToken, (req, res) => {
   findProfesor(req.params.id, {
     onSuccess: profesor => res.send(profesor),
     onNotFound: () => res.sendStatus(404),
@@ -63,7 +64,7 @@ router.get("/:id", (req, res) => {
   });
 });
 
-router.put("/:id", (req, res) => {
+router.put("/:id", verifyToken, (req, res) => {
   const onSuccess = profesor =>
     profesor
       .update(
@@ -86,7 +87,7 @@ router.put("/:id", (req, res) => {
   });
 });
 
-router.delete("/:id", (req, res) => {
+router.delete("/:id", verifyToken, (req, res) => {
   const onSuccess = profesor =>
     profesor
       .destroy()

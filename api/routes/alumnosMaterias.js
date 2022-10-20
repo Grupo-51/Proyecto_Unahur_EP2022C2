@@ -1,9 +1,9 @@
 var express = require("express");
 var router = express.Router();
 var models = require("../models");
+const verifyToken = require("../middleware/auth");
 
-
-router.get("/", (req, res) => {
+router.get("/", verifyToken, (req, res) => {
   const paginaActualNumero = Number.parseInt(req.query.paginaActual);
   const cantidadAVerNumero = Number.parseInt(req.query.cantidadAVer);
 
@@ -50,91 +50,7 @@ router.get("/", (req, res) => {
 }
 );
 
-/*
-
-router.get("/", (req, res) => {
-  console.log("Esto es un mensaje para ver en consola");
-  const {paginaActual, cantidadAVer} = req.query;
-  models.alumnosinscripciones
-  .findAll({
-    offset: (paginaActual - 1) * cantidadAVer,
-    limit: parseInt(cantidadAVer),
-    attributes: ["id", "nota_final"] ,
-    raw: true,
-    include: [
-      {
-        model: models.alumno,
-        as: "Alumno-Matriculado",
-        attributes: ["id", "nombre", "apellido", "email"]
-      },
-      {
-        model: models.materia,
-        as: "Materia-Matriculada",
-        attributes: ["id", "nombre"],
-        include: [
-          {
-            model: models.carrera,
-            as: "Carrera-Relacionada",
-            attributes: ["id", "nombre"]
-          }
-        ]
-      }
-    ]
-  })
-  .then(alumnosinscripciones => res.send(alumnosinscripciones))
-  .catch(() => res.sendStatus(500));
-}
-);
-
-
-/*
-router.get('/pagina/:page', (req, res) => {
-  let limit = 5;   // number of records per page
-  let offset = 0;
-  models.alumnosinscripciones
-  .findAndCountAll()
-  .then((data) => {
-    let page = req.params.page;      // page number
-    let pages = Math.ceil(data.count / limit);
-		offset = limit * (page - 1);
-    models.alumnosinscripciones.findAll({
-      attributes: ["id", "nota_final"] ,
-      raw: true,
-      include: [
-        {
-          model: models.alumno,
-          as: "Alumno-Matriculado",
-          attributes: ["id", "nombre", "apellido", "email"]
-        },
-        {
-          model: models.materia,
-          as: "Materia-Matriculada",
-          attributes: ["id", "nombre"],
-          include: [
-            {
-              model: models.carrera,
-              as: "Carrera-Relacionada",
-              attributes: ["id", "nombre"]
-            }
-          ]
-        }
-      ],
-      limit: limit,
-      offset: offset,
-      $sort: { id: 1 }
-    })
-    .then((alumnosinscripciones) => {
-      res.status(200).json({'result': alumnosinscripciones, 'count': data.count, 'pages': pages});
-    });
-  })
-  .catch(function (error) {
-		res.status(500).send('Internal Server Error');
-	});
-});
-
-*/
-
-router.post("/", (req, res) => {
+router.post("/", verifyToken, (req, res) => {
   models.alumnosinscripciones
     .create({ id_alumno: req.body.id_alumno, id_materia: req.body.id_materia , nota_final: req.body.nota_final })
     .then(alumnosinscripciones => res.status(201).send({ id: alumnosinscripciones.id }))
@@ -178,7 +94,7 @@ const findAlumnosinscripciones = (id, { onSuccess, onNotFound, onError }) => {
     .catch(() => onError());
 };
 
-router.get("/:id", (req, res) => {
+router.get("/:id", verifyToken, (req, res) => {
   findAlumnosinscripciones(req.params.id, {
     onSuccess: alumnosinscripciones => res.send(alumnosinscripciones),
     onNotFound: () => res.sendStatus(404),
@@ -186,7 +102,7 @@ router.get("/:id", (req, res) => {
   });
 });
 
-router.put("/:id", (req, res) => {
+router.put("/:id", verifyToken, (req, res) => {
   const onSuccess = alumnosinscripciones =>
     alumnosinscripciones
       .update(
@@ -209,7 +125,7 @@ router.put("/:id", (req, res) => {
   });
 });
 
-router.delete("/:id", (req, res) => {
+router.delete("/:id", verifyToken, (req, res) => {
   const onSuccess = alumnosinscripciones =>
     alumnosinscripciones
       .destroy()
