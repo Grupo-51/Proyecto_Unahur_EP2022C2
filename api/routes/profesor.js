@@ -1,7 +1,32 @@
 var express = require("express");
 var router = express.Router();
 var models = require("../models");
+
+////////////////////
+//  INICIO DE    // 
+// VALIDACIONES //
+/////////////////
 const verifyToken = require("../middleware/auth");
+
+const validaDictaMateria = (id, { onSuccess, onNotFound, onError }) => {
+  models.materia.findOne ({
+    where: { id_profesor: id }
+  }).then(inscripcion => {
+    if (inscripcion) {
+      onSuccess(inscripcion);
+    } else {
+      onNotFound();
+    }
+  }).catch(error => {
+    onError(error);
+  });
+};
+
+////////////////////
+//    FIN DE     // 
+// VALIDACIONES //
+/////////////////
+
 
 router.get("/", verifyToken, (req, res) => {
   const paginaActualNumero = Number.parseInt(req.query.paginaActual);
@@ -22,8 +47,8 @@ router.get("/", verifyToken, (req, res) => {
     .findAll({
       offset: (paginaActual - 1) * cantidadAVer,
       limit: parseInt(cantidadAVer),
-      attributes: ["id", "nombre", "apellido","id_materia","email"],
-      include:[{as:'Materia-QueDicta', model:models.materia, attributes: ["nombre"]}]
+      attributes: ["id", "nombre", "apellido","email"],
+//      include:[{as:'Materias-QueDicta', model:models.materia, attributes: ["nombre"]}]
     })
     .then(profesor => res.send(profesor))
     .catch(() => res.sendStatus(500));
@@ -48,8 +73,8 @@ router.post("/", verifyToken, (req, res) => {
 const findProfesor = (id, { onSuccess, onNotFound, onError }) => {
   models.profesor
     .findOne({
-      attributes: ["id", "nombre", "apellido","id_materia","email"],
-      include:[{as:'Materia-QueDicta', model:models.materia, attributes: ["nombre"]}],
+      attributes: ["id", "nombre", "apellido","email"],
+//      include:[{as:'Materias-QueDicta', model:models.materia, attributes: ["nombre"]}],
       where: { id }
     })
     .then(profesor => (profesor ? onSuccess(profesor) : onNotFound()))
@@ -88,16 +113,22 @@ router.put("/:id", verifyToken, (req, res) => {
 });
 
 router.delete("/:id", verifyToken, (req, res) => {
-  const onSuccess = profesor =>
-    profesor
-      .destroy()
-      .then(() => res.sendStatus(200))
-      .catch(() => res.sendStatus(500));
-  findProfesor(req.params.id, {
-    onSuccess,
-    onNotFound: () => res.sendStatus(404),
+  if(validaDictaMateria(req.params.id, {
+    onSuccess: () => res.status(400).send('Bad request: profesor tiene materias que dicta'),
+    onNotFound: () => {
+      const onSuccess = profesor =>
+        profesor
+          .destroy()
+          .then(() => res.sendStatus(200))
+          .catch(() => res.sendStatus(500));
+      findProfesor(req.params.id, {
+        onSuccess,
+        onNotFound: () => res.sendStatus(404),
+        onError: () => res.sendStatus(500)
+      });
+    },
     onError: () => res.sendStatus(500)
-  });
+  }));
 });
 
 module.exports = router;

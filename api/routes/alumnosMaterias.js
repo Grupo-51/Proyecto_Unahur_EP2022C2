@@ -1,7 +1,47 @@
 var express = require("express");
 var router = express.Router();
 var models = require("../models");
+
+////////////////////
+//  INICIO DE    // 
+// VALIDACIONES //
+/////////////////
 const verifyToken = require("../middleware/auth");
+
+const validaAlumno  = (id, { onSuccess, onNotFound, onError }) => {
+  models.alumno.findOne ({
+    where: { id: id }
+  }).then(alumno => {
+    if (alumno) {
+      onSuccess(alumno);
+    } else {
+      onNotFound();
+    }
+  }).catch(error => {
+    onError(error);
+  });
+};
+
+////////////////////
+//    FIN DE     // 
+// VALIDACIONES //
+/////////////////
+
+const validaMateria = (id, { onSuccess, onNotFound, onError }) => {
+  models.materia.findOne ({
+    where: { id: id }
+  }).then(materia => {
+    if (materia) {
+      onSuccess(materia);
+    } else {
+      onNotFound();
+    }
+  }).catch(error => {
+    onError(error);
+  });
+};
+
+/////////////////
 
 router.get("/", verifyToken, (req, res) => {
   const paginaActualNumero = Number.parseInt(req.query.paginaActual);
@@ -51,18 +91,40 @@ router.get("/", verifyToken, (req, res) => {
 );
 
 router.post("/", verifyToken, (req, res) => {
-  models.alumnosinscripciones
-    .create({ id_alumno: req.body.id_alumno, id_materia: req.body.id_materia , nota_final: req.body.nota_final })
-    .then(alumnosinscripciones => res.status(201).send({ id: alumnosinscripciones.id }))
-    .catch(error => {
-      if (error == "SequelizeUniqueConstraintError: Validation error") {
-        res.status(400).send('Bad request: existe otra alumnosinscripciones con el mismo nombre')
-      }
-      else {
-        console.log(`Error al intentar insertar en la base de datos: ${error}`)
-        res.sendStatus(500)
-      }
-    });
+  if(validaAlumno(req.body.id_alumno, {
+    onSuccess: () => {
+      if(validaMateria(req.body.id_materia, {
+        onSuccess: () => {
+          models.alumnosinscripciones
+            .create({
+              id_alumno: req.body.id_alumno, 
+              id_materia: req.body.id_materia , 
+              nota_final: req.body.nota_final
+            })
+            .then(alumnosinscripciones => res.status(201).send({ id: alumnosinscripciones.id }))
+            .catch(error => {
+              if (error instanceof Sequelize.UniqueConstraintError) {
+                return res.status(409).send({
+                  codigo: "RELACION ALUMNO-MATERIA YA EXISTE",
+                  mensaje: "La relación alumno-materia ya existe"
+                });
+              }
+              res.sendStatus(500);
+            });
+        }, 
+        onNotFound: () => res.status(404).send({
+          codigo: "MATERIA_NO_ENCONTRADA",
+          mensaje: "La materia no existe"
+        }),
+        onError: () => res.sendStatus(500)
+      }));
+    }, 
+    onNotFound: () => res.status(404).send({
+      codigo: "ALUMNO_NO_ENCONTRADO",
+      mensaje: "El alumno no existe"
+    }),
+    onError: () => res.sendStatus(500)
+  }));
 });
 
 const findAlumnosinscripciones = (id, { onSuccess, onNotFound, onError }) => {
@@ -103,26 +165,45 @@ router.get("/:id", verifyToken, (req, res) => {
 });
 
 router.put("/:id", verifyToken, (req, res) => {
-  const onSuccess = alumnosinscripciones =>
-    alumnosinscripciones
-      .update(
-        { id_alumno: req.body.id_alumno, id_materia: req.body.id_materia, nota_final: req.body.nota_final } , { fields: ["id_alumno", "id_materia", "nota_final"] }
-      )
-      .then(() => res.sendStatus(200))
-      .catch(error => {
-        if (error == "SequelizeUniqueConstraintError: Validation error") {
-          res.status(400).send('Bad request: existe otra alumnosinscripciones con el mismo nombre')
-        }
-        else {
-          console.log(`Error al intentar actualizar la base de datos: ${error}`)
-          res.sendStatus(500)
-        }
-      });
-      findAlumnosinscripciones(req.params.id, {
-    onSuccess,
-    onNotFound: () => res.sendStatus(404),
+  if(validaAlumno(req.body.id_alumno, {
+    onSuccess: () => {
+      if(validaMateria(req.body.id_materia, {
+        onSuccess: () => {
+          models.alumnosinscripciones
+            .update(
+              {
+              	id_alumno: req.body.id_alumno, 
+              	id_materia: req.body.id_materia , 
+              	nota_final: req.body.nota_final
+              },
+              { where: { id: req.params.id } }
+            )
+            .then(([filasModificadas]) =>
+              filasModificadas > 0 ? res.sendStatus(200) : res.sendStatus(404)
+            )
+            .catch(error => {
+              if (error instanceof Sequelize.UniqueConstraintError) {
+                return res.status(409).send({
+                  codigo: "RELACION ALUMNO-MATERIA YA EXISTE",
+                  mensaje: "La relación alumno-materia ya existe"
+                });
+              }
+              res.sendStatus(500);
+            });
+        },
+        onNotFound: () => res.status(404).send({
+          codigo: "MATERIA_NO_ENCONTRADA",
+          mensaje: "La materia no existe"
+        }),
+        onError: () => res.sendStatus(500)
+      }));
+    } ,
+    onNotFound: () => res.status(404).send({
+      codigo: "ALUMNO_NO_ENCONTRADO",
+      mensaje: "El alumno no existe"
+    }),
     onError: () => res.sendStatus(500)
-  });
+  }));
 });
 
 router.delete("/:id", verifyToken, (req, res) => {

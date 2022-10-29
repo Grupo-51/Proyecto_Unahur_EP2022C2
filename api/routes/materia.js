@@ -2,8 +2,60 @@ var express = require("express");
 var router = express.Router();
 var models = require("../models");
 
+////////////////////
+//  INICIO DE    // 
+// VALIDACIONES //
+/////////////////
 const verifyToken = require("../middleware/auth");
 
+const validaProfesor  = (id, { onSuccess, onNotFound, onError }) => {
+  models.profesor.findOne ({
+    where: { id: id }
+  }).then(profesor => {
+    if (profesor) {
+      onSuccess(profesor);
+    } else {
+      onNotFound();
+    }
+  }).catch(error => {
+    onError(error);
+  });
+};
+
+////////////////////
+//    FIN DE     // 
+// VALIDACIONES //
+/////////////////
+
+const validaCarrera = (id, { onSuccess, onNotFound, onError }) => {
+  models.carrera.findOne ({
+    where: { id: id }
+  }).then(carrera => {
+    if (carrera) {
+      onSuccess(carrera);
+    } else {
+      onNotFound();
+    }
+  }).catch(error => {
+    onError(error);
+  });
+};
+
+const validaInscripcion = (id, { onSuccess, onNotFound, onError }) => {
+  models.alumnosinscripciones.findOne ({
+    where: { id_materia: id }
+  }).then(inscripcion => {
+    if (inscripcion) {
+      onSuccess(inscripcion);
+    } else {
+      onNotFound();
+    }
+  }).catch(error => {
+    onError(error);
+  });
+};
+
+/////////////////
 
 router.get("/", verifyToken, (req, res) => {
   
@@ -36,19 +88,43 @@ router.get("/", verifyToken, (req, res) => {
 
 
 router.post("/", verifyToken, (req, res) => {
-  models.materia
-    .create({ nombre: req.body.nombre, id_carrera: req.body.id_carrera, id_profesor: req.body.id_profesor })
-    .then(materia => res.status(201).send({ id: materia.id }))
-    .catch(error => {
-      if (error == "SequelizeUniqueConstraintError: Validation error") {
-        res.status(400).send('Bad request: existe otra materia con el mismo nombre')
-      }
-      else {
-        console.log(`Error al intentar insertar en la base de datos: ${error}`)
-        res.sendStatus(500)
-      }
-    });
+  if(validaProfesor(req.body.id_profesor, {
+    onSuccess: () => {
+      if(validaCarrera(req.body.id_carrera, {
+        onSuccess: () => {
+          models.materia
+            .create({
+              nombre: req.body.nombre,
+              id_carrera: req.body.id_carrera,
+              id_profesor: req.body.id_profesor
+            })
+            .then(materia => res.status(201).send({ id: materia.id }))
+            .catch(error => {
+              if (error instanceof Sequelize.UniqueConstraintError) {
+                return res.status(409).send({
+                  codigo: "MATERIA_YA_EXISTE",
+                  mensaje: "La materia ya existe"
+                });
+              }
+              res.sendStatus(500);
+            });
+        }, 
+        onNotFound: () => res.status(404).send({
+          codigo: "CARRERA_NO_ENCONTRADA",
+          mensaje: "La carrera no existe"
+        }),
+        onError: () => res.sendStatus(500)
+      }));
+    }, 
+    onNotFound: () => res.status(404).send({
+      codigo: "PROFESOR_NO_ENCONTRADO",
+      mensaje: "El profesor no existe"
+    }),
+    onError: () => res.sendStatus(500)
+  }));
 });
+
+
 
 const findMateria = (id, { onSuccess, onNotFound, onError }) => {
   models.materia
@@ -71,39 +147,66 @@ router.get("/:id", verifyToken, (req, res) => {
 });
 
 router.put("/:id", verifyToken, (req, res) => {
-  const onSuccess = materia =>
-    materia
-      .update(
-        { nombre: req.body.nombre, id_carrera: req.body.id_carrera, id_profesor: req.body.id_profesor } , { fields: ["nombre", "id_carrera", "id_profesor"] }
-      )
-      .then(() => res.sendStatus(200))
-      .catch(error => {
-        if (error == "SequelizeUniqueConstraintError: Validation error") {
-          res.status(400).send('Bad request: existe otra materia con el mismo nombre')
-        }
-        else {
-          console.log(`Error al intentar actualizar la base de datos: ${error}`)
-          res.sendStatus(500)
-        }
-      });
-    findMateria(req.params.id, {
-    onSuccess,
-    onNotFound: () => res.sendStatus(404),
+  if(validaProfesor(req.body.id_profesor, {
+    onSuccess: () => {
+      if(validaCarrera(req.body.id_carrera, {
+        onSuccess: () => {
+          models.materia
+            .update(
+              {
+                nombre: req.body.nombre,
+                id_carrera: req.body.id_carrera,
+                id_profesor: req.body.id_profesor
+              },
+              { where: { id: req.params.id } }
+            )
+            .then(([filasModificadas]) =>
+              filasModificadas > 0 ? res.sendStatus(200) : res.sendStatus(404)
+            )
+            .catch(error => {
+              if (error instanceof Sequelize.UniqueConstraintError) {
+                return res.status(409).send({
+                  codigo: "MATERIA_YA_EXISTE",
+                  mensaje: "La materia ya existe"
+                });
+              }
+              res.sendStatus(500);
+            });
+        },
+        onNotFound: () => res.status(404).send({
+          codigo: "CARRERA_NO_ENCONTRADA",
+          mensaje: "La carrera no existe"
+        }),
+        onError: () => res.sendStatus(500)
+      }));
+    } ,
+    onNotFound: () => res.status(404).send({
+      codigo: "PROFESOR_NO_ENCONTRADO",
+      mensaje: "El profesor no existe"
+    }),
     onError: () => res.sendStatus(500)
-  });
+  }));
 });
 
+
 router.delete("/:id", verifyToken, (req, res) => {
-  const onSuccess = materia =>
-    materia
-      .destroy()
-      .then(() => res.sendStatus(200))
-      .catch(() => res.sendStatus(500));
-  findMateria(req.params.id, {
-    onSuccess,
-    onNotFound: () => res.sendStatus(404),
+  if(validaInscripcion(req.params.id, {
+    onSuccess: () => res.status(400).send('Bad request: materia tiene inscripciones'),
+    onNotFound: () => {
+      const onSuccess = materia =>
+        materia
+          .destroy()
+          .then(() => res.sendStatus(200))
+          .catch(() => res.sendStatus(500));
+      findMateria(req.params.id, {
+        onSuccess,
+        onNotFound: () => res.sendStatus(404),
+        onError: () => res.sendStatus(500)
+      });
+    },
     onError: () => res.sendStatus(500)
-  });
+  }));
 });
+
 
 module.exports = router;

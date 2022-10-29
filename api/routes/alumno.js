@@ -1,7 +1,33 @@
 var express = require("express");
 var router = express.Router();
 var models = require("../models");
+
+////////////////////
+//  INICIO DE    // 
+// VALIDACIONES //
+/////////////////
 const verifyToken = require("../middleware/auth");
+
+const validaInscripcion = (id, { onSuccess, onNotFound, onError }) => {
+  models.alumnosinscripciones.findOne ({
+    where: { id_alumno: id }
+  }).then(inscripcion => {
+    if (inscripcion) {
+      onSuccess(inscripcion);
+    } else {
+      onNotFound();
+    }
+  }).catch(error => {
+    onError(error);
+  });
+};
+
+////////////////////
+//    FIN DE     // 
+// VALIDACIONES //
+/////////////////
+
+
 
 router.get("/", verifyToken, (req, res) => {
   const paginaActualNumero = Number.parseInt(req.query.paginaActual);
@@ -88,16 +114,24 @@ router.put("/:id", verifyToken, (req, res) => {
 });
 
 router.delete("/:id", verifyToken, (req, res) => {
-  const onSuccess = alumno =>
-    alumno
-      .destroy()
-      .then(() => res.sendStatus(200))
-      .catch(() => res.sendStatus(500));
-  findAlumno(req.params.id, {
-    onSuccess,
-    onNotFound: () => res.sendStatus(404),
+  if(validaInscripcion(req.params.id, {
+    onSuccess: () => res.status(400).send('Bad request: alumno tiene inscripciones'),
+    onNotFound: () => {
+      const onSuccess = alumno =>
+        alumno
+          .destroy()
+          .then(() => res.sendStatus(200))
+          .catch(() => res.sendStatus(500));
+      findAlumno(req.params.id, {
+        onSuccess,
+        onNotFound: () => res.sendStatus(404),
+        onError: () => res.sendStatus(500)
+      });
+    },
     onError: () => res.sendStatus(500)
-  });
+  }));
 });
+
+
 
 module.exports = router;

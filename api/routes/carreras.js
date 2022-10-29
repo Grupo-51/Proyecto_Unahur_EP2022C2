@@ -1,7 +1,32 @@
 var express = require("express");
 var router = express.Router();
 var models = require("../models");
+
+////////////////////
+//  INICIO DE    // 
+// VALIDACIONES //
+/////////////////
 const verifyToken = require("../middleware/auth");
+
+const validaHayMateriaDeCarrera = (id, { onSuccess, onNotFound, onError }) => {
+  models.materia.findOne ({
+    where: { id_carrera: id }
+  }).then(inscripcion => {
+    if (inscripcion) {
+      onSuccess(inscripcion);
+    } else {
+      onNotFound();
+    }
+  }).catch(error => {
+    onError(error);
+  });
+};
+
+////////////////////
+//    FIN DE     // 
+// VALIDACIONES //
+/////////////////
+
 
 router.get("/", verifyToken, (req, res) => {
   const paginaActualNumero = Number.parseInt(req.query.paginaActual);
@@ -84,16 +109,22 @@ router.put("/:id", verifyToken, (req, res) => {
 });
 
 router.delete("/:id", verifyToken, (req, res) => {
-  const onSuccess = carrera =>
-    carrera
-      .destroy()
-      .then(() => res.sendStatus(200))
-      .catch(() => res.sendStatus(500));
-  findCarrera(req.params.id, {
-    onSuccess,
-    onNotFound: () => res.sendStatus(404),
+  if(validaHayMateriaDeCarrera(req.params.id, {
+    onSuccess: () => res.status(400).send('Bad request: hay materias que pertenecen a la carrera'),
+    onNotFound: () => {
+      const onSuccess = carrera =>
+        carrera
+          .destroy()
+          .then(() => res.sendStatus(200))
+          .catch(() => res.sendStatus(500));
+      findCarrera(req.params.id, {
+        onSuccess,
+        onNotFound: () => res.sendStatus(404),
+        onError: () => res.sendStatus(500)
+      });
+    },
     onError: () => res.sendStatus(500)
-  });
+  }));
 });
 
 module.exports = router;
