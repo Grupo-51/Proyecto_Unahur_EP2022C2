@@ -11,9 +11,9 @@ const verifyToken = require("../middleware/auth");
 const validaHayMateriaDeCarrera = (id, { onSuccess, onNotFound, onError }) => {
   models.materia.findOne ({
     where: { id_carrera: id }
-  }).then(inscripcion => {
-    if (inscripcion) {
-      onSuccess(inscripcion);
+  }).then(carrera => {
+    if (carrera) {
+      onSuccess(carrera);
     } else {
       onNotFound();
     }

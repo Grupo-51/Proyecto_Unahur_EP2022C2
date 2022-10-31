@@ -68,7 +68,7 @@ router.get("/", verifyToken, (req, res) => {
 
 router.post("/", verifyToken, (req, res) => {
   models.profesor
-    .create({ nombre: req.body.nombre, apellido: req.body.apellido, id_materia: req.body.id_materia, email: req.body.email })
+    .create({ nombre: req.body.nombre, apellido: req.body.apellido, email: req.body.email })
     .then(profesor => res.status(201).send({ id: profesor.id }))
     .catch(error => {
       if (error == "SequelizeUniqueConstraintError: Validation error") {
@@ -104,7 +104,7 @@ router.put("/:id", verifyToken, (req, res) => {
   const onSuccess = profesor =>
     profesor
       .update(
-        { nombre: req.body.nombre, apellido: req.body.apellido, id_materia: req.body.id_materia, email: req.body.email } , { fields: ["nombre", "apellido", "id_materia", "email"] }
+        { nombre: req.body.nombre, apellido: req.body.apellido, email: req.body.email } , { fields: ["nombre", "apellido", "email"] }
       )
       .then(() => res.sendStatus(200))
       .catch(error => {
