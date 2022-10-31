@@ -27,7 +27,16 @@ const validaInscripcion = (id, { onSuccess, onNotFound, onError }) => {
 // VALIDACIONES //
 /////////////////
 
-
+router.get("/cant", verifyToken, (req, res) => {
+  models.alumno
+    .count()
+    .then(cantidad => {
+      res.json({ cantidad: cantidad });
+    })
+    .catch(error => {
+      res.status(500).json({ error: error });
+    });
+});
 
 router.get("/", verifyToken, (req, res) => {
   const paginaActualNumero = Number.parseInt(req.query.paginaActual);

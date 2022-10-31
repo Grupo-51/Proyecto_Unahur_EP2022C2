@@ -27,6 +27,17 @@ const validaHayMateriaDeCarrera = (id, { onSuccess, onNotFound, onError }) => {
 // VALIDACIONES //
 /////////////////
 
+router.get("/cant", verifyToken, (req, res) => {
+  models.carrera
+    .count()
+    .then(cantidad => {
+      res.json({ cantidad: cantidad });
+    })
+    .catch(error => {
+      res.status(500).json({ error: error });
+    });
+});
+
 
 router.get("/", verifyToken, (req, res) => {
   const paginaActualNumero = Number.parseInt(req.query.paginaActual);
@@ -52,6 +63,67 @@ router.get("/", verifyToken, (req, res) => {
     .then(carreras => res.send(carreras))
     .catch(() => res.sendStatus(500));
 });
+
+router.get("/mat", verifyToken, (req, res) => {
+  const paginaActualNumero = Number.parseInt(req.query.paginaActual);
+  const cantidadAVerNumero = Number.parseInt(req.query.cantidadAVer);
+
+  let paginaActual = 1;
+  if(!Number.isNaN(paginaActualNumero) && paginaActualNumero > 0){
+    paginaActual = paginaActualNumero;
+  }
+
+  let cantidadAVer = 5;
+  if(!Number.isNaN(cantidadAVerNumero) && cantidadAVerNumero > 0 && cantidadAVerNumero <= 10){    
+    cantidadAVer = cantidadAVerNumero;
+  }
+
+  console.log("Esto es un mensaje para ver en consola");
+  models.carrera
+    .findAll({
+      offset: (paginaActual - 1) * cantidadAVer,
+      limit: parseInt(cantidadAVer),
+      attributes: ["id", "nombre"],
+      include:[{as:'Plan-DeEstudios', model:models.materia, attributes: ["id","nombre"]}],
+    })
+    .then(carreras => res.send(carreras))
+    .catch(() => res.sendStatus(500));
+});
+
+/***********************
+ * ESTRUCTURA COMPLETA
+ **********************/
+
+ router.get("/completo", verifyToken, (req, res) => {
+  const paginaActualNumero = Number.parseInt(req.query.paginaActual);
+  const cantidadAVerNumero = Number.parseInt(req.query.cantidadAVer);
+
+  let paginaActual = 1;
+  if(!Number.isNaN(paginaActualNumero) && paginaActualNumero > 0){
+    paginaActual = paginaActualNumero;
+  }
+
+  let cantidadAVer = 5;
+  if(!Number.isNaN(cantidadAVerNumero) && cantidadAVerNumero > 0 && cantidadAVerNumero <= 10){    
+    cantidadAVer = cantidadAVerNumero;
+  }
+
+  console.log("Esto es un mensaje para ver en consola");
+  models.carrera
+    .findAll({
+      offset: (paginaActual - 1) * cantidadAVer,
+      limit: parseInt(cantidadAVer),
+      attributes: ["id", "nombre"],
+      include:[{as:'Plan-DeEstudios', model:models.materia, attributes: ["id","nombre"],
+      include:[{as:'Profesor-QueDicta', model:models.profesor, attributes: ["id","nombre"]}],
+      include:[{as:'Alumnos-Inscriptos', model:models.alumnosinscripciones, attributes: ["id","id_alumno"],
+      include:[{as:'Alumno-Matriculado', model:models.alumno, attributes: ["id","nombre"]}],}], }],
+    }) 
+    .then(carreras => res.send(carreras))
+    .catch(() => res.sendStatus(500));
+});
+
+/*************/
 
 
 router.post("/", verifyToken, (req, res) => {

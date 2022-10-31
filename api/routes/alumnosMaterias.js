@@ -22,10 +22,6 @@ const validaAlumno  = (id, { onSuccess, onNotFound, onError }) => {
   });
 };
 
-////////////////////
-//    FIN DE     // 
-// VALIDACIONES //
-/////////////////
 
 const validaMateria = (id, { onSuccess, onNotFound, onError }) => {
   models.materia.findOne ({
@@ -41,7 +37,22 @@ const validaMateria = (id, { onSuccess, onNotFound, onError }) => {
   });
 };
 
+////////////////////
+//    FIN DE     // 
+// VALIDACIONES //
 /////////////////
+
+router.get("/cant", verifyToken, (req, res) => {
+  models.alumnosinscripciones
+    .count()
+    .then(cantidad => {
+      res.json({ cantidad: cantidad });
+    })
+    .catch(error => {
+      res.status(500).json({ error: error });
+    });
+});
+
 
 router.get("/", verifyToken, (req, res) => {
   const paginaActualNumero = Number.parseInt(req.query.paginaActual);

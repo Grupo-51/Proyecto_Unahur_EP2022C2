@@ -22,11 +22,6 @@ const validaProfesor  = (id, { onSuccess, onNotFound, onError }) => {
   });
 };
 
-////////////////////
-//    FIN DE     // 
-// VALIDACIONES //
-/////////////////
-
 const validaCarrera = (id, { onSuccess, onNotFound, onError }) => {
   models.carrera.findOne ({
     where: { id: id }
@@ -55,7 +50,21 @@ const validaInscripcion = (id, { onSuccess, onNotFound, onError }) => {
   });
 };
 
+////////////////////
+//    FIN DE     // 
+// VALIDACIONES //
 /////////////////
+
+router.get("/cant", verifyToken, (req, res) => {
+  models.materia
+    .count()
+    .then(cantidad => {
+      res.json({ cantidad: cantidad });
+    })
+    .catch(error => {
+      res.status(500).json({ error: error });
+    });
+});
 
 router.get("/", verifyToken, (req, res) => {
   

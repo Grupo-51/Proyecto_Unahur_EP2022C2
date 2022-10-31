@@ -7,6 +7,10 @@ module.exports = (sequelize, DataTypes) => {
   }, {});
   profesor.associate = function(models) {
     // associations can be defined here
+    profesor.hasMany(models.materia, {
+      as: 'Materias-QueDicta',
+      foreignKey: 'id_profesor'
+    })
   };
   return profesor;
 };

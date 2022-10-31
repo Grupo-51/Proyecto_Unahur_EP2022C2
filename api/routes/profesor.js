@@ -27,6 +27,17 @@ const validaDictaMateria = (id, { onSuccess, onNotFound, onError }) => {
 // VALIDACIONES //
 /////////////////
 
+router.get("/cant", verifyToken, (req, res) => {
+  models.profesor
+    .count()
+    .then(cantidad => {
+      res.json({ cantidad: cantidad });
+    })
+    .catch(error => {
+      res.status(500).json({ error: error });
+    });
+});
+
 
 router.get("/", verifyToken, (req, res) => {
   const paginaActualNumero = Number.parseInt(req.query.paginaActual);
@@ -48,7 +59,7 @@ router.get("/", verifyToken, (req, res) => {
       offset: (paginaActual - 1) * cantidadAVer,
       limit: parseInt(cantidadAVer),
       attributes: ["id", "nombre", "apellido","email"],
-//      include:[{as:'Materias-QueDicta', model:models.materia, attributes: ["nombre"]}]
+      include:[{as:'Materias-QueDicta', model:models.materia, attributes: ["id","nombre"]}]
     })
     .then(profesor => res.send(profesor))
     .catch(() => res.sendStatus(500));
@@ -74,7 +85,7 @@ const findProfesor = (id, { onSuccess, onNotFound, onError }) => {
   models.profesor
     .findOne({
       attributes: ["id", "nombre", "apellido","email"],
-//      include:[{as:'Materias-QueDicta', model:models.materia, attributes: ["nombre"]}],
+      include:[{as:'Materias-QueDicta', model:models.materia, attributes: ["id","nombre"]}],
       where: { id }
     })
     .then(profesor => (profesor ? onSuccess(profesor) : onNotFound()))
