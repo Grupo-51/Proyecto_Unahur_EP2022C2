@@ -108,15 +108,6 @@ router.get("/", verifyToken, (req, res) => {
     .catch(() => res.sendStatus(500));
 });
 
-
-router.get("/:id", verifyToken, (req, res) => {
-  findCarrera(req.params.id, {
-    onSuccess: carrera => res.send(carrera),
-    onNotFound: () => res.sendStatus(404),
-    onError: () => res.sendStatus(500)
-  });
-});
-
 router.get("/mat", verifyToken, (req, res) => {
   const paginaActualNumero = Number.parseInt(req.query.paginaActual);
   const cantidadAVerNumero = Number.parseInt(req.query.cantidadAVer);
@@ -175,6 +166,16 @@ router.get("/mat", verifyToken, (req, res) => {
     .then(carreras => res.send(carreras))
     .catch(() => res.sendStatus(500));
 });
+
+
+router.get("/:id", verifyToken, (req, res) => {
+  findCarrera(req.params.id, {
+    onSuccess: carrera => res.send(carrera),
+    onNotFound: () => res.sendStatus(404),
+    onError: () => res.sendStatus(500)
+  });
+});
+
 
 
 router.post("/", verifyToken, crearCarrera);
