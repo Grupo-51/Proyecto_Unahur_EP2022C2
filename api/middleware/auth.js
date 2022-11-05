@@ -13,7 +13,7 @@ verifyToken.use((req, res, next) => {
     if (token) {
       jwt.verify(token, keys.key, (err, decoded) => {      
         if (err) {
-          return res.json({ mensaje: 'Token inválida' });    
+          return res.status(401).json({ mensaje: 'Token inválida' });    
         } else {
           req.decoded = decoded;    
           next();
