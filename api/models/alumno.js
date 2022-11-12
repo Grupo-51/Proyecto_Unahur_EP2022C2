@@ -1,6 +1,7 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
   const alumno = sequelize.define('alumno', {
+    DNI: {type: DataTypes.INTEGER, allownull: false, unique: true},
     nombre: DataTypes.STRING,
     apellido: DataTypes.STRING,
     email: DataTypes.STRING

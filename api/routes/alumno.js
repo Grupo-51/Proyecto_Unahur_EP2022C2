@@ -12,6 +12,7 @@ const validaInscripcionAlumno = require("../middleware/validaInscripcionAlumno")
 const crearAlumno = (req, res) => {
   models.alumno
     .create({
+      DNI: req.body.DNI,
       nombre: req.body.nombre,
       apellido: req.body.apellido,
       email: req.body.email
@@ -31,6 +32,7 @@ const crearAlumno = (req, res) => {
 const modificarAlumno = (req, res) => {
   models.alumno
     .update({
+      DNI: req.body.DNI,
       nombre: req.body.nombre,
       apellido: req.body.apellido,
       email: req.body.email
@@ -64,12 +66,23 @@ const eliminarAlumno = (req, res) => {
 const findAlumno = (id, { onSuccess, onNotFound, onError }) => {
   models.alumno
     .findOne({
-      attributes: ["id", "nombre","apellido","email"],
+      attributes: ["id", "DNI", "nombre","apellido","email"],
       where: { id }
     })
     .then(alumno => (alumno ? onSuccess(alumno) : onNotFound()))
     .catch(() => onError());
 };
+
+const findAlumnoPorDni = (dni, { onSuccess, onNotFound, onError }) => {
+  models.alumno
+    .findOne({
+      attributes: ["id", "DNI", "nombre","apellido","email"],
+      where: { dni }
+    })
+    .then(alumno => (alumno ? onSuccess(alumno) : onNotFound()))
+    .catch(() => onError());
+};
+
 
 /****************************************************************/
 
@@ -83,6 +96,14 @@ router.get("/cant", verifyToken, (req, res) => {
     .catch(error => {
       res.status(500).json({ error: error });
     });
+});
+
+router.get("/porDNI/:dni", verifyToken, (req, res) => {
+  findAlumnoPorDni(req.params.dni, {
+    onSuccess: alumno => res.send(alumno),
+    onNotFound: () => res.sendStatus(404),
+    onError: () => res.sendStatus(500)
+  });
 });
 
 router.get("/", verifyToken, (req, res) => {
@@ -103,7 +124,7 @@ router.get("/", verifyToken, (req, res) => {
     .findAll({
       offset: (paginaActual - 1) * cantidadAVer,
       limit: parseInt(cantidadAVer),
-      attributes: ["id", "nombre", "apellido", "email"]
+      attributes: ["id", "DNI", "nombre", "apellido", "email"]
     })
     .then(alumno => res.send(alumno))
     .catch(() => res.sendStatus(500));

@@ -70,7 +70,7 @@ const findAlumnosinscripciones = (id, { onSuccess, onNotFound, onError }) => {
         {
           model: models.alumno,
           as: "Alumno-Matriculado",
-          attributes: ["id", "nombre", "apellido", "email"]
+          attributes: ["id", "DNI", "nombre", "apellido", "email"]
         },
         {
           model: models.materia,
@@ -90,6 +90,40 @@ const findAlumnosinscripciones = (id, { onSuccess, onNotFound, onError }) => {
     .then(alumnosinscripciones => (alumnosinscripciones ? onSuccess(alumnosinscripciones) : onNotFound()))
     .catch(() => onError());
 };
+
+const findAlumnoInscripPorDNI = (DNI, { onSuccess, onNotFound, onError }) => {
+  models.alumno
+    .findOne({
+      attributes: ["id", "DNI", "nombre", "apellido", "email"],
+      raw: true,
+      include: [
+        {
+          model: models.alumnosinscripciones,
+          as: "Inscripciones",
+          attributes: ["id", "nota_final"],
+          include: [
+            {
+              model: models.materia,
+              as: "Materia-Matriculada",
+              attributes: ["id", "nombre"],
+              include: [
+                {
+                  model: models.carrera,
+                  as: "Carrera-Relacionada",
+                  attributes: ["id", "nombre"]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      where: { DNI }
+    })
+    .then(alumno => (alumno ? onSuccess(alumno) : onNotFound()))
+    .catch(() => onError());
+};
+
+
 /****************************************************************/
 
 /* METODOS */
@@ -104,6 +138,13 @@ router.get("/cant", verifyToken, (req, res) => {
     });
 });
 
+router.get("/porDNI/:dni", verifyToken, (req, res) => {
+  findAlumnoInscripPorDNI(req.params.dni, {
+    onSuccess: alumno => res.send(alumno),
+    onNotFound: () => res.sendStatus(404),
+    onError: () => res.sendStatus(500)
+  });
+});
 
 router.get("/", verifyToken, (req, res) => {
   const paginaActualNumero = Number.parseInt(req.query.paginaActual);
@@ -123,7 +164,7 @@ router.get("/", verifyToken, (req, res) => {
   .findAll({
     offset: (paginaActual - 1) * cantidadAVer,
     limit: parseInt(cantidadAVer),
-    attributes: ["id", "nombre", "apellido", "email"], 
+    attributes: ["id", "DNI", "nombre", "apellido", "email"], 
     //raw: true,
     include: [
       {
